@@ -1,14 +1,20 @@
 <!doctype html>
+<html lang="en">
+<head>
 <meta charset="utf-8">
+<meta name="viewport" content="initial-scale=1.0, user-scalable=1">
 <meta name="author" content="Alex Johnstone">
-<link rel="stylesheet" href="{{ '/static/style.css'|url }}">
-<link rel="shortcut icon" href="{{ '/static/favicon.png'|url }}">
+<meta property="og:type" content="website" />
+{% block extrahead %}{% endblock %}
+<link rel="stylesheet" href="{{ '/static/style.css'|asseturl }}">
+<link rel="shortcut icon" href="{{ '/static/favicon.png'|asseturl }}">
 <title>{% block title %}Welcome{% endblock %} — alexjj.com</title>
+</head>
 <body>
   <section>
       <header>
           <nav>
-              <ul><a href="{{ '/'|url }}"><img src="{{ '/static/cat.png'|url }}" alt="meow" style="height:100px"></a>
+              <ul><a href="{{ '/'|url }}"><img src="{{ '/static/cat.png'|asseturl }}" alt="meow" style="height:100px"></a>
               </ul>
               <ul>
                 {% for href, title in bag('nav').iteritems() %}
