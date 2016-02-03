@@ -10,8 +10,20 @@ This is an example blog post.  Not much here but that's not the point :)
 
 Testing markdown highlighter:
 
+<pre>
+import datetime
+from selenium import webdriver
+from time import sleep
+</pre>
+
+<code>
+import datetime
+from selenium import webdriver
+from time import sleep
+</code>
+
 ```
-code with no highlighting:
+code with no highlighting: <pre>
 import datetime
 from selenium import webdriver
 from time import sleep
