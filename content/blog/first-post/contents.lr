@@ -10,17 +10,13 @@ This is an example blog post.  Not much here but that's not the point :)
 
 Testing markdown highlighter:
 
+<code>
 <pre>
 import datetime
 from selenium import webdriver
 from time import sleep
 </pre>
-
-
-    import datetime
-    from selenium import webdriver
-    from time import sleep
-
+</code>
 
 ```
 code with no highlighting: <pre>
