@@ -4,7 +4,6 @@ url = https://alexjj.github.io/alexjj.com
 
 [packages]
 lektor-disqus-comments = 0.2
-lektor-atom = 0.1
 
 [servers.ghpages]
 target = ghpages+https://alexjj/alexjj.com
