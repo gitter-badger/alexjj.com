@@ -10,6 +10,13 @@ This is an example blog post.  Not much here but that's not the point :)
 
 Testing markdown highlighter:
 
+```
+code with no highlighting:
+import datetime
+from selenium import webdriver
+from time import sleep
+```
+
 ```python
 '''
 Index fund scraper.
