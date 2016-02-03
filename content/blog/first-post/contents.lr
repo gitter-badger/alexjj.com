@@ -16,11 +16,11 @@ from selenium import webdriver
 from time import sleep
 </pre>
 
-<code>
-import datetime
-from selenium import webdriver
-from time import sleep
-</code>
+
+    import datetime
+    from selenium import webdriver
+    from time import sleep
+
 
 ```
 code with no highlighting: <pre>
