@@ -1,6 +1,7 @@
 [project]
 name = alexjj.com
 url = https://alexjj.github.io/alexjj.com
+url_style = absolute
 
 [packages]
 lektor-disqus-comments = 0.2
