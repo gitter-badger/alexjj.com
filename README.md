@@ -1,6 +1,6 @@
 # alexjj.com
 [![Build Status](https://travis-ci.org/alexjj/alexjj.com.svg?branch=master)](https://travis-ci.org/alexjj/alexjj.com)
-
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/alexjj/alexjj.com/blob/master/LICENSE)
 This site is currently under development. 
 
 It will be the final code for my website: alexjj.com
