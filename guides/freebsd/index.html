@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="initial-scale=1.0, user-scalable=1">
+<meta name="author" content="Alex Johnstone">
+<meta property="og:type" content="website" />
+
+<meta property="og:title" content="FreeBSD" />
+<meta property="og:url" content="" />
+
+<link href='https://fonts.googleapis.com/css?family=Roboto:400,400italic,700italic' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" href="../../static/style.css?h=423c1265">
+<link rel="shortcut icon" href="../../static/favicon.png">
+<title>FreeBSD — alexjj.com</title>
+</head>
+<body>
+  <section>
+      <header>
+          <nav>
+              <ul><a href="../../"><img src="../../static/cat.png" alt="meow" style="height:100px"></a>
+              </ul>
+              <ul>
+                
+                    <li><code><a href="../../">Home</a></code></li>
+              
+                    <li><code><a href="../../blog/">Blog</a></code></li>
+              
+                    <li><code><a href="../../guides/">Guides</a></code></li>
+              
+                    <li><code><a href="../../about/">About</a></code></li>
+              
+            </ul>
+        </nav>
+    </header>
+    <article>
+        
+    <h1>FreeBSD</h1>
+    <p><small>
+    written by  on 2015-08-18. Updated 2016-02-08.
+    </small></p>
+    <hr>
+    <h1>FreeBSD</h1>
+<h2>Installation</h2>
+<p>Use install media.
+Add user to <code>wheel</code> and <code>operator</code> group</p>
+<h3>First commands</h3>
+<p>Update FreeBSD:</p>
+<pre><code>freebsd-update fetch
+freebsd-update install
+portsnap fetch extract
+/usr/sbin/pkg
+</code></pre>
+<p>Install portmaster for managing ports:</p>
+<pre><code>cd /usr/ports/ports-mgmt/portmaster
+make install clean
+cp /usr/local/etc/portmaster.rc.sample /usr/local/etc/portmaster.rc
+</code></pre>
+<p><code>vi /usr/local/etc/portmaster.rc</code></p>
+<pre><code># Always delete stale distfiles without prompting (-d)
+ALWAYS_SCRUB_DISTFILES=dopt
+# Be verbose (-v)
+PM_VERBOSE=vopt
+# Install packages for build-only dependencies (--packages-build)
+PM_PACKAGES_BUILD=pmp_build
+# Delete build-only dependencies when finished (--delete-build-only)
+PM_DEL_BUILD_ONLY=pm_dbo
+#Suppress the build confirmation message (--no-confirm)
+PM_NO_CONFIRM=pm_no_confirm
+</code></pre>
+<h3>System Configs</h3>
+<p>Set locale:<br>
+<code>vi /etc/login.conf</code></p>
+<pre><code>-    \:umask=022:
++    \:umask=022:\
++    \:charset=UTF-8:\
++    \:lang=en_US.UTF-8:
+</code></pre>
+<p>Rebuild database:<br>
+<code>cap_mkdb /etc/login.conf</code><br>
+<br><code>vi /etc/profile</code></p>
+<pre><code>LANG=en_US.UTF-8;   export LANG
+CHARSET=UTF-8;  export CHARSET
+</code></pre>
+<p>Add some build settings to QT (for gtk, CUPS, and network audio):<br>
+<code>echo "QT4_OPTIONS=    CUPS QGTKSTYLE NAS" &gt;&gt; /etc/make.conf</code></p>
+<p>/etc/sysctl.conf</p>
+<pre><code># Enhance shared memory X11 interface
+kern.ipc.shmmax=67108864
+kern.ipc.shmall=32768
+
+# Enhance desktop responsiveness under high CPU use (200/224)
+kern.sched.preempt_thresh=224
+
+# Bump up maximum number of open files
+kern.maxfiles=204800
+kern.maxfilesperproc=200000
+
+# Disable PC Speaker
+hw.syscons.bell=0
+
+# Shared memory for Chromium
+kern.ipc.shm_allow_removed=1
+
+# Don't wait for USB devices
+hw.usb.no_shutdown_wait=1
+
+# Allow users to mount disks
+vfs.usermount=1
+
+# Don't automatically use new sound devices
+hw.snd.default_auto=0
+</code></pre>
+<p>/boot/loader.conf</p>
+<pre><code># Use new graphical console driver
+kern.vty=vt
+
+# Boot-time kernel tuning
+kern.ipc.shmseg=1024
+kern.ipc.shmmni=1024
+kern.maxproc=10000
+
+# Load MMC/SD card-reader support
+mmc_load="YES"
+mmcsd_load="YES"
+sdhci_load="YES"
+
+# Access ATAPI devices through the CAM subsystem
+atapicam_load="YES"
+
+# Filesystems in Userspace
+fuse_load="YES"
+
+# Intel Core thermal sensors
+coretemp_load="YES"
+
+# AMD K8, K10, K11 thermal sensors
+amdtemp_load="YES"
+
+# In-memory filesystems
+tmpfs_load="YES"
+
+# Asynchronous I/O
+aio_load="YES"
+
+# Handle Unicode on removable media
+libiconv_load="YES"
+libmchain_load="YES"
+cd9660_iconv_load="YES"
+msdosfs_iconv_load="YES"
+
+#Enable sound at boot
+snd_driver_load="YES"
+</code></pre>
+<p>/etc/rc.conf</p>
+<pre><code>moused_enable="YES"
+
+# powerd: hiadaptive speed while on AC power, adaptive while on battery power
+powerd_enable="YES"
+powerd_flags="-a hiadaptive -b adaptive"
+
+# Enable BlueTooth
+hcsecd_enable="YES"
+sdpd_enable="YES"
+
+# Synchronize system time
+ntpd_enable="YES"
+# Let ntpd make time jumps larger than 1000sec
+ntpd_flags="-g"
+
+# Remote logins
+sshd_enable="YES"
+
+background_dhclient="YES"
+
+dbus_enable="YES"
+# Check for dependancies but probably need it
+hald_enable="YES"
+</code></pre>
+<p>sysctl - edits /etc/sysctl.conf<br>
+sysrc - edits /etc/rc.conf</p>
+<p>Allow normal users to access disks etc.:
+<br>/etc/devfs.conf
+<br>This are for ones present at boot time:</p>
+<pre><code># Allow all users to access optical media
+perm    /dev/acd0       0666
+perm    /dev/acd1       0666
+perm    /dev/cd0        0666
+perm    /dev/cd1        0666
+
+# Allow all USB Devices to be mounted
+perm    /dev/da0        0666
+perm    /dev/da1        0666
+perm    /dev/da2        0666
+perm    /dev/da3        0666
+perm    /dev/da4        0666
+perm    /dev/da5        0666
+
+# Misc other devices
+perm    /dev/pass0      0666
+perm    /dev/xpt0       0666
+perm    /dev/uscanner0  0666
+perm    /dev/video0     0666
+perm    /dev/tuner0     0666
+perm    /dev/dvb/adapter0/demux0    0666
+perm    /dev/dvb/adapter0/dvr       0666
+perm    /dev/dvb/adapter0/frontend0 0666
+</code></pre>
+<p>For post-boot drives:
+<br>/etc/devfs.rules</p>
+<pre><code>[devfsrules_common=7]
+add path 'ad[0-9]\*'        mode 666
+add path 'ada[0-9]\*'    mode 666
+add path 'da[0-9]\*'        mode 666
+add path 'acd[0-9]\*'    mode 666
+add path 'cd[0-9]\*'        mode 666
+add path 'mmcsd[0-9]\*'    mode 666
+add path 'pass[0-9]\*'    mode 666
+add path 'xpt[0-9]\*'    mode 666
+add path 'ugen[0-9]\*'    mode 666
+add path 'usbctl'        mode 666
+add path 'usb/\*'        mode 666
+add path 'lpt[0-9]\*'    mode 666
+add path 'ulpt[0-9]\*'    mode 666
+add path 'unlpt[0-9]\*'    mode 666
+add path 'fd[0-9]\*'        mode 666
+add path 'uscan[0-9]\*'    mode 666
+add path 'video[0-9]\*'    mode 666
+add path 'tuner[0-9]*'  mode 666
+add path 'dvb/\*'        mode 666
+add path 'cx88*' mode 0660
+add path 'cx23885*' mode 0660 # CX23885-family stream configuration device
+add path 'iicdev*' mode 0660
+add path 'uvisor[0-9]*' mode 0660
+</code></pre>
+<p>Enable the ruleset:<br>
+<code>sysrc devfs_system_ruleset="devfsrules_common"</code></p>
+<p>Sound device:
+List devices:
+<br><code>cat /dev/sndstat</code></p>
+<p>Set default sound device (number from list):<br>
+<code>sysctl hw.snd.default_unit=6</code></p>
+<h3>Linuxisms</h3>
+<p>/etc/fstab</p>
+<pre><code>proc    /proc    procfs    rw    0    0
+fdesc    /dev/fd    fdescfs    rw,auto,late    0    0
+</code></pre>
+<h3>X Windows System</h3>
+<p>Links:</p>
+<ul>
+<li><a href="https://cooltrainer.org/a-freebsd-desktop-howto/#going-graphical">Cooltrainer</a></li>
+<li><a href="https://forums.freebsd.org/threads/howto-minimal-freebsd-desktop.35308/">Minimal FreeBSD Guide</a></li>
+<li><a href="https://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/x-config.html">Handbook</a></li>
+</ul>
+<h2>Maintenance</h2>
+<p>Script to check for updates and list them:</p>
+<pre><code>#!/bin/sh
+/usr/sbin/portsnap fetch update &amp;&amp; \
+/usr/local/sbin/portmaster -L --index-only | egrep '(ew|ort) version|total install'
+echo -n "Last update: "
+date -r `pkg query %t | sort | tail -n1` "+%Y%m%d"
+</code></pre>
+<h2>Commands</h2>
+<p>Useful commands. Taken from <a href="https://github.com/hukl/freebsd-toolbox/blob/master/commands.md">here</a>.</p>
+<p><img style="height:500px" src="tools.png" alt="Commands"/></p>
+<h3>Users</h3>
+<pre><code>adduser                                 # wrapper script to add users
+chsh                                    # change user shell and other info
+pw groupadd teamtwo                     # add a group to the system
+pw groupmod teamtwo -m &lt;username&gt;       # add a user to a group
+/etc/group                              # file to edit groups manually
+id                                      # show group membership for current user
+</code></pre>
+<h3>System Configuration</h3>
+<pre><code>cat /var/run/dmesg.boot                 # show boot log with info about disks and pci devices
+kenv                                    # show bios, board and chassi info (dump from kernel env)
+pciconf -l -cv                          # show info about PCI devices of the machine
+camcontrol devlist -v                   # list of attached ATA devices
+ifconfig                                # show and configure network interface parameters
+sysctl                                  # tool to show/set all system/kernel coniguration variables
+sysctl -a                               # show all stystem/kernel configuration variables
+sysctl hw                               # show hardware related info and settings
+sysctl net                              # show all network related info and settings
+sysctl hw.model                         # show CPU model
+sysctl net.inet.tcp.delayed_ack=0       # disable delayed ack in tcp
+</code></pre>
+<h3>System Statistics</h3>
+<pre><code>top                                     # display and update information about the top cpu processes
+nice top -j -P -a                       # Makes top a bit nicer
+ps auxwww | grep &lt;processname&gt;          # display process status
+systat -vmstat 1                        # show general overview of load, memory, interrupts, disk io
+systat -iostat 1                        # show disk throughput
+systat -ifstat 1                        # show network throughput for all interfaces
+systat -netstat 1                       # show netstat output but automatically refreshed
+systat -tcp 1                           # show tcp statistics
+</code></pre>
+<h3>ZFS</h3>
+<pre><code>zfs list                                # list all zfs datasets (volumes)
+zfs snapshot &lt;pool&gt;/&lt;dataset&gt;@&lt;name&gt;    # generic way of creating a snapshot of a dataset in a storage pool
+zfs snapshot -r tank@2014021301         # create a snapshot of all datasets in the pool "tank"
+zfs rollback &lt;pool&gt;/&lt;dataset&gt;@name      # rollback of a dataset to a given snapshot
+zfs destroy &lt;pool&gt;/&lt;dataset&gt;            # destroy a dataset / remove it from the pool
+zfs destroy &lt;pool&gt;/&lt;dataset&gt;@name       # destroy a snapshot
+zfs set &lt;key&gt;=&lt;val&gt; &lt;pool&gt;/&lt;dataset&gt;    # generic way of setting options on a given dataset
+zfs set compression=lz4 tank/var/log    # enable LZ4 compression on /var/logs
+zfs get compressratio &lt;pool&gt;/&lt;dataset&gt;  # show the current compression ratio of a dataset
+zfs send -R tank@snapshot | \           # send all datasets@snapshot recursively to another host
+ssh root@[IP] zfs recv -F tank
+zfs unmount &lt;pool&gt;/&lt;dataset&gt;            # unmount a zfs dataset
+zfs upgrade -r &lt;pool&gt;                   # upgrade all volumes in the pool (technically its the root volume e.g. tank)
+zpool status                            # show health info about currently imported ZFS storage pools
+zpool scrub                             # check all written blocks for consistency
+zpool iostat -v tank                    # show more information about the pool including log devices
+zpool add &lt;pool&gt; mirror &lt;dev1&gt; &lt;dev1&gt;   # add two disks as mirror to a storage pool
+zpool remove &lt;pool&gt; &lt;device&gt;            # remove single devices or mirror sets from the storage pool
+zpool upgrade &lt;pool&gt;                    # upgrade the storage pool to latest version
+</code></pre>
+<h3>Software</h3>
+<pre><code># Ports
+portsnap fetch                          # fetch the latest portfiles
+portsnap update                         # update the portfiles on disk with the previously fetched portfiles
+portsnap update -p /usr/jails/basejail/usr/ports # update ports tree for jails
+whereis &lt;portname&gt;                      # show the directory of the portfile
+cd /usr/ports/*/&lt;portname&gt;              # find the parent directory of a given portname
+locate &lt;portname&gt; | grep ports          # manual way of searching for ports
+cd &lt;portdir&gt; &amp;&amp; make install            # compile and install a port
+cd &lt;portdir&gt; &amp;&amp; make config             # re-run configuration of a port when available
+cd &lt;portdir&gt; &amp;&amp; sudo make deinstall clean reinstall # upgrade the port
+
+# Packages
+pkg search &lt;packagename&gt;                # search for binary packages
+pkg install &lt;packagename&gt;               # install binary package and its dependencies
+pkg info                                # show list of currently installed ports/packages with version info
+pkg version                             # show which ports/packages are outdated and need an update
+pkg upgrade &lt;packagename&gt;               # upgrade a packages
+pkg which &lt;filename&gt;                    # find out which package installed a given file
+</code></pre>
+<h3>Services</h3>
+<pre><code>service -l                              # list all available services
+service -e                              # list all enabled services
+service &lt;servicename&gt; status            # show the status of the service with the given servicename
+service &lt;servicename&gt; start             # start the service with the given servicename
+service &lt;servicename&gt; stop              # stop the service with the given servicename
+service &lt;servicename&gt; restart           # restart the service with the given servicename
+service &lt;servicename&gt; reload            # reload the configuration of the service with the given servicename
+</code></pre>
+<h3>Network</h3>
+<pre><code>ifconfig &lt;iface&gt; inet &lt;ip/mask&gt;         # configure IP address on interface
+ifconfig &lt;iface&gt; inet &lt;ip/mask&gt; alias   # configure IP address alias on interface
+ifconfig &lt;iface&gt; del &lt;ip&gt;               # remove IP address from interface
+route add -net default &lt;gw_ip&gt;          # add default route
+route add -net &lt;ip/mask&gt; &lt;gw_ip&gt;        # add a custom route for given network
+/etc/rc.d/netif restart &amp;&amp; \            # restart networking and routing after changing the configuration
+/etc/rc.d/routing restart                 without rebooting. Execute in tmux or screen session
+netstat -rn                             # display routing table
+netstat -an                             # display all connections
+netstat -m                              # display buffer usage
+netstat -Lan                            # display status of listen queues
+netstat -s                              # display extensive statistics per protocol (use -p tcp to only show tcp)
+sysctl kern.ipc.numopensockets          # display number of open sockets
+vmstat -z | egrep "ITEM|tcpcb"          # number of hash table buckets to handle incoming tcp connections
+                                          increase net.inet.tcp.tcbhashsize if hitting the limit
+sysctl net.inet.tcp.hostcache.list      # display current content of hostcache with its parameters per IP
+</code></pre>
+<h3>Firewall</h3>
+<pre><code>pfctl -si                               # show current state table and counters (useful for tuning)
+pfctl -s state                          # show current content of state table
+</code></pre>
+<h3>IPsec</h3>
+<pre><code>ipsec start                             # start VPN and establish (auto=start) VPN connections
+setkey -D                               # show extensive Kernel information about current connections
+setkey -DP                              # show more condensed connection information
+ipsec statusall [conn]                  # show returns detailed status information either on connection or all
+                                          connections if no name is provided
+ipsec leases                            # show current leases from virtual IP address pool
+ipsec rereadsecrets                     # flushes and rereads all secrets defined in ipsec.secrets
+ipsec rereadall                         # flushes and rereads all secrets defined in ipsec.secrets as well as all
+                                          certificates and and certificate revocation lists
+ipsec update                            # sends a HUP signal to the daemon that determines any changes in ipsec.conf
+                                          and updates the configuration on the running IKE daemon charon
+ipsec reload                            # sends a USR1 signal to the daemon that reloads the whole configuration
+                                          on the running IKE daemon charon based on the actual ipsec.conf
+ipsec restart                           # terminates all ipsec connections, sends a TERM signal to the daemon and
+                                          restarts it afterwards
+ipsec stroke up [conn]                  # initiate connection [conn]
+ipsec stroke down [conn]                # terminate connection [conn]
+</code></pre>
+<h3>ezjail</h3>
+<pre><code>ezjail-admin start|stop                 # start and stop all the jails
+ezjail-admin start|stop &lt;JID&gt;|&lt;hostname&gt;# start and stop individual jail
+ezjail-admin list                       # list all the jails on the host system
+ezjail-admin console &lt;JID&gt;|&lt;hostname&gt;   # open root shell into jail
+ezjail-admin create -f exmaple &lt;hostname&gt; &lt;IP&gt; # create a new jail
+ezjail-admin delete -w hostname         # delete the jail (in case you use zfs also delete the volume)
+</code></pre>
+<h3>Common sysctl's to set</h3>
+<pre><code>hw.usb.no_shutdown_wait=1               # don't wait for USB devices when shutting down (if your system hangs when
+                                          rebooting)
+
+kern.maxfiles=204800                    # Increase file descriptor limits
+kern.maxfilesperproc=200000
+</code></pre>
+<h2>Software</h2>
+<h3>Usenet</h3>
+<pre><code>pkg install sabnzbd
+</code></pre>
+<p>Edit /usr/local/sabnzbd/sabnzbd.ini
+Change hosts to 0.0.0.0 to allow access from other machines</p>
+<pre><code>pkg install git wget p7zip
+
+cd /usr/local
+git clone https://github.com/SiCKRAGETV/SickRage.git sickrage
+
+chown -R _sabnzbd:_sabnzbd /usr/local/sickrage
+
+cp /usr/local/sickrage/runscripts/init.freebsd /usr/local/etc/rc.d/sickrage
+
+sysrc sickrage_user="_sabnzbd"
+sysrc sickrage_group="_sabnzbd"
+sysrc sickrage_enable="YES"
+</code></pre>
+
+    
+<div id="disqus_thread"></div>
+<script>
+  var disqus_config = function() { this.page.identifier = "/guides/freebsd"; this.page.url = "https://alexjj.github.io/alexjj.com/guides/freebsd/"; };
+  (function() {
+    var d = document, s = d.createElement('script');
+    s.src = '//alexjj.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+  })();
+</script>
+<noscript>
+  Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript"
+    rel="nofollow">comments powered by Disqus.</a>
+</noscript>
+
+
+
+    </article>
+    <footer>
+      <nav>
+        <ul>
+          <li>
+            <small>| (• ◡•)| <a target="blank" href="https://github.com/alexjj/alexjj.com" title="Source" style="color:red">♥</a> (❍ᴥ❍ʋ)<small>
+          </li>
+        </ul>
+      </nav>
+    </footer>
+  </section>
+</body>
+</html>

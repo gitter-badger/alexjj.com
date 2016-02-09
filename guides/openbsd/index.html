@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="initial-scale=1.0, user-scalable=1">
+<meta name="author" content="Alex Johnstone">
+<meta property="og:type" content="website" />
+
+<meta property="og:title" content="OpenBSD" />
+<meta property="og:url" content="" />
+
+<link href='https://fonts.googleapis.com/css?family=Roboto:400,400italic,700italic' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" href="../../static/style.css?h=423c1265">
+<link rel="shortcut icon" href="../../static/favicon.png">
+<title>OpenBSD — alexjj.com</title>
+</head>
+<body>
+  <section>
+      <header>
+          <nav>
+              <ul><a href="../../"><img src="../../static/cat.png" alt="meow" style="height:100px"></a>
+              </ul>
+              <ul>
+                
+                    <li><code><a href="../../">Home</a></code></li>
+              
+                    <li><code><a href="../../blog/">Blog</a></code></li>
+              
+                    <li><code><a href="../../guides/">Guides</a></code></li>
+              
+                    <li><code><a href="../../about/">About</a></code></li>
+              
+            </ul>
+        </nav>
+    </header>
+    <article>
+        
+    <h1>OpenBSD</h1>
+    <p><small>
+    written by Alex Johnstone on 2015-08-16. Updated 2015-10-24.
+    </small></p>
+    <hr>
+    <p>Best for desktops, laptops, firewalls, routers, and interesting hardware. No ZFS
+though - use FreeBSD or Linux for that.</p>
+<h2>Installation:</h2>
+<p>The installer is very easy to follow. Some extras:</p>
+<h3>Encrypted root:</h3>
+<p>Easy with <a href="http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/man4/softraid.4?query=softraid&sec=4">softraid(4)</a>.</p>
+<h4>Swap details:</h4>
+<p>Putting swap inside the crypto volume means double encryption as OpenBSD encrypts swap by default (and in a better way), so this adds CPU cycles. However, to hibernate and save kernel crash dumps the swap needs to be on the 'b' slice of the boot volume, i.e. inside the crypto volume. On modern CPUs I'm not sure how much these extra CPU cycles matter - maybe impacts battery life of laptop?</p>
+<p>Best option is to keep a swap volume on the host disk and one on the crypto volume, then in /etc/rc.local remove the crypto volume's swap slice from the active swap set. This gives the best of both worlds at the cost of a bit of disk space.</p>
+<p><code># grep '^swapctl' /etc/rc.local</code><br>
+<code>swapctl -d /dev/sd0b</code></p>
+<p>Since /etc/rc runs before /etc/rc.local, the 'b' slice of the boot volume exits as a swap device when it's needed during warm reboots for saving crash dumps to /var/crash with <a href="http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/man8/savecore.8?query=savecore&sec=8">savecore(8)</a>. Since you're disabling the 'b' slice on the crypto volume with <a href="http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/man8/swapctl.8?query=swapctl&sec=8">swapctl(8)</a> afterwards, you no longer suffer the double encryption performance penalty. None the less, the 'b' slice still exists if you need to write an initial crash dump with.</p>
+<h4>Method:</h4>
+<p>To find out the identifier of your primary hard disk, run the following command:
+<br>
+<code>dmesg | grep "^[sw]d"</code></p>
+<p>e.g. <code>wd0</code>:
+<br>
+Initialise:
+<br>
+<code>fdisk -iy wd0</code>
+<br>
+Partition:
+<br>
+<code>disklabel -E wd0</code>
+<br>
+Let's do the swap first:
+<br>
+<code>a b</code>
+<br>
+<code>[64] enter</code>
+<br>
+1G
+<br>
+<code>[swap] enter</code></p>
+<p>Now the rest:
+<br>
+<code>a a</code>
+<br>
+Defaults, size is "*", type is RAID</p>
+<p><code>w</code>, <code>q</code> to write and quit.</p>
+<p>Then encrypt:<br>
+<code>bioctl -c C -l /dev/wd0a softraid0</code></p>
+<p>Back to installer: <code>install</code>
+<br>
+When get to avaiable disks, press <code>?</code> to give details of disk:</p>
+<p><code>sd0: SR CRYPTO</code></p>
+<p>Whole Disk and auto setup is fine.<br>
+Reboot!</p>
+<p>Enable non-crypto volume swaps:<br>
+<code># vi /mnt/etc/fstab</code><br>
+<code>/dev/wd0b none swap sw 0 0</code></p>
+<p><code># vi /etc/rc.local</code><br>
+<code>swapctl -d /dev/sd0b</code></p>
+<p>Add some mount options:<br>
+<code>cp /etc/fstab /etc/fstab.orig</code><br>
+<code>sed 's/rw/rw,softdep,noatime/g' /etc/fstab &gt; newfstab</code><br>
+<code>mv newfstab /etc/fstab</code></p>
+<p><a href="http://undeadly.org/cgi?action=article&sid=20131112031806">Details on using a keydisk, and where swap info was taken from.</a></p>
+<h2>Post install setup</h2>
+<p>This is the official <a href="http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/man8/afterboot.8?query=afterboot">afterboot(8)</a> to follow.</p>
+<h3>Basics</h3>
+<p>Add to <code>/etc/rc.conf.local</code> not <code>rc.conf</code></p>
+<ul>
+<li>Time</li>
+</ul>
+<p>If VM/bad clock change <code>/etc/rc.conf.local</code><br>
+<code>ntpd_flags="-s"</code> to have it set at startup then adjusted</p>
+<ul>
+<li>Hostname</li>
+</ul>
+<p><code>cat /etc/myname</code> and adjust to fit</p>
+<ul>
+<li>Mail aliases</li>
+</ul>
+<p>Add email to <code>/etc/mail/aliases</code> then run <code>newaliases(8)</code><br>
+<code>root: myemail@gmail.com</code> or just <code>root: &lt;username&gt;</code></p>
+<ul>
+<li>Graphical console (xdm)</li>
+</ul>
+<p>Boot into xdm(1), add to <code>/etc/rc.conf.local</code><br></p>
+<p>xdm_flags=""</p>
+<ul>
+<li>More users</li>
+</ul>
+<p>Add your user to staff login to get more memory:<br>
+<code>usermod -L staff yourlogin</code><br>
+Run <code>adduser(8)</code> command and answer questions</p>
+<ul>
+<li>Packages</li>
+</ul>
+<p>Login as user and add to <code>~/.profile</code>:<br>
+<code>export PKG_PATH=ftp://ftp5.usa.openbsd.org/pub/OpenBSD/`uname -r`/packages/`uname -m'/</code></p>
+<p><a href="http://www.openbsd.org/ftp.html">Mirrors found here.</a></p>
+<h3>Install Patches</h3>
+<p><a href="http://www.openbsd.org/faq/faq10.html#Patches">Official ref.</a></p>
+<h3>Using M:Tier</h3>
+<p><a href="https://stable.mtier.org/">mtier</a> offers an easy way to keep OpenBSD up to date.</p>
+<p>M:tier's authentication certificate needs to be copied into /etc/signify.  As
+root change to the /etc/signify directory and use wget to download the
+authentication file</p>
+<p><code>cd /etc/signify</code><br>
+<code>wget https://stable.mtier.org/mtier-57-pkg.pub</code><br>
+<code>cd /usr/local/libexec</code><br>
+<code>wget https://stable.mtier.org/openup</code><br>
+<code>chmod +x openup</code></p>
+<p><a href="http://www.mtier.org/index.php/solutions/apps/openup/">How to use openup</a>
+<br><em>hint: <code>sudo openup</code></em></p>
+<p>visudo<br><code>"user"  ALL=(ALL) PASSWD: /usr/local/libexec/openup</code></p>
+<h2>X11</h2>
+<p><a href="https://github.com/alexjj/dotfiles/tree/openbsd/X11">See my dotfiles</a> for .xsession, .Xresources and so on.</p>
+<p>Configure ~/.cwmrc / whatever WM using.</p>
+<p>login classes things for firefox etc.</p>
+<p><a href="http://undeadly.org/cgi?action=article&sid=20090502141551">cwm "guide"</a></p>
+<h3>Software list</h3>
+<p>sudo pkg_add rxvt-unicode terminus-font</p>
+<h3>XFCE</h3>
+<p><code>$ cat /etc/rc.conf.local</code></p>
+<pre><code class="lang-multicast_host=YES```">```hotplugd_flags=&quot;&quot;```    ## needed to start hotplugd for toad
+```apmd_flags=&quot;-A&quot;```      ## enables suspend and power mgmt
+# messagebus is the new name for dbus_daemon in 5.8
+```pkg_scripts=&quot;${pkg_scripts} messagebus toadd&quot;
+</code></pre>
+<p><code>cat ~/.xsession</code><br>
+<code>exec /usr/local/bin/ck-launch-session /usr/local/bin/startxfce4</code></p>
+<h2>Misc</h2>
+<p>User to shutdown/reboot:<br>
+visudo<br>
+<code>%users  localhost=/sbin/shutdown -h now,/sbin/shutdown -r now</code></p>
+<p>Convert man page to ps to print:<br>
+<code>mandoc -Tps /usr/share/man/man8/afterboot.8 &gt; afterboot.ps</code></p>
+
+    
+<div id="disqus_thread"></div>
+<script>
+  var disqus_config = function() { this.page.identifier = "/guides/openbsd"; this.page.url = "https://alexjj.github.io/alexjj.com/guides/openbsd/"; };
+  (function() {
+    var d = document, s = d.createElement('script');
+    s.src = '//alexjj.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+  })();
+</script>
+<noscript>
+  Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript"
+    rel="nofollow">comments powered by Disqus.</a>
+</noscript>
+
+
+
+    </article>
+    <footer>
+      <nav>
+        <ul>
+          <li>
+            <small>| (• ◡•)| <a target="blank" href="https://github.com/alexjj/alexjj.com" title="Source" style="color:red">♥</a> (❍ᴥ❍ʋ)<small>
+          </li>
+        </ul>
+      </nav>
+    </footer>
+  </section>
+</body>
+</html>
