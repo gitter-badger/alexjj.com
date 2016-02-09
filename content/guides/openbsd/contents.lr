@@ -1,0 +1,189 @@
+title: OpenBSD
+---
+body:
+
+Best for desktops, laptops, firewalls, routers, and interesting hardware. No ZFS
+though - use FreeBSD or Linux for that.
+
+
+## Installation:
+
+The installer is very easy to follow. Some extras:
+
+
+### Encrypted root:
+Easy with [softraid(4)](http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/man4/softraid.4?query=softraid&sec=4).
+
+#### Swap details:
+Putting swap inside the crypto volume means double encryption as OpenBSD encrypts swap by default (and in a better way), so this adds CPU cycles. However, to hibernate and save kernel crash dumps the swap needs to be on the 'b' slice of the boot volume, i.e. inside the crypto volume. On modern CPUs I'm not sure how much these extra CPU cycles matter - maybe impacts battery life of laptop?
+
+Best option is to keep a swap volume on the host disk and one on the crypto volume, then in /etc/rc.local remove the crypto volume's swap slice from the active swap set. This gives the best of both worlds at the cost of a bit of disk space.
+
+```# grep '^swapctl' /etc/rc.local```<br>
+```swapctl -d /dev/sd0b```
+
+Since /etc/rc runs before /etc/rc.local, the 'b' slice of the boot volume exits as a swap device when it's needed during warm reboots for saving crash dumps to /var/crash with [savecore(8)](http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/man8/savecore.8?query=savecore&sec=8). Since you're disabling the 'b' slice on the crypto volume with [swapctl(8)](http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/man8/swapctl.8?query=swapctl&sec=8) afterwards, you no longer suffer the double encryption performance penalty. None the less, the 'b' slice still exists if you need to write an initial crash dump with.
+
+#### Method:
+
+To find out the identifier of your primary hard disk, run the following command:
+<br>
+```dmesg | grep "^[sw]d"```
+
+e.g. ```wd0```:
+<br>
+Initialise:
+<br>
+```fdisk -iy wd0```
+<br>
+Partition:
+<br>
+```disklabel -E wd0```
+<br>
+Let's do the swap first:
+<br>
+```a b```
+<br>
+```[64] enter```
+<br>
+1G
+<br>
+```[swap] enter```
+
+Now the rest:
+<br>
+```a a```
+<br>
+Defaults, size is "*", type is RAID
+
+```w```, ```q``` to write and quit.
+
+
+Then encrypt:<br>
+```bioctl -c C -l /dev/wd0a softraid0```
+
+Back to installer: ```install```
+<br>
+When get to avaiable disks, press ```?``` to give details of disk:
+
+```sd0: SR CRYPTO```
+
+
+
+Whole Disk and auto setup is fine.<br>
+Reboot!
+
+Enable non-crypto volume swaps:<br>
+```# vi /mnt/etc/fstab```<br>
+```/dev/wd0b none swap sw 0 0```
+
+```# vi /etc/rc.local```<br>
+```swapctl -d /dev/sd0b```
+
+Add some mount options:<br>
+```cp /etc/fstab /etc/fstab.orig```<br>
+```sed 's/rw/rw,softdep,noatime/g' /etc/fstab > newfstab```<br>
+```mv newfstab /etc/fstab```
+
+[Details on using a keydisk, and where swap info was taken from.](http://undeadly.org/cgi?action=article&sid=20131112031806)
+
+## Post install setup
+
+This is the official [afterboot(8)](http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/man8/afterboot.8?query=afterboot) to follow.
+
+### Basics
+Add to ```/etc/rc.conf.local``` not ```rc.conf```
+
+* Time
+
+If VM/bad clock change ```/etc/rc.conf.local```<br>
+```ntpd_flags="-s"``` to have it set at startup then adjusted
+* Hostname
+
+```cat /etc/myname``` and adjust to fit
+
+* Mail aliases
+
+Add email to ```/etc/mail/aliases``` then run ```newaliases(8)```<br>
+```root: myemail@gmail.com``` or just ```root: <username>```
+
+* Graphical console (xdm)
+
+Boot into xdm(1), add to ```/etc/rc.conf.local```<br>
+
+xdm_flags=""
+
+* More users
+
+Add your user to staff login to get more memory:<br>
+```usermod -L staff yourlogin```<br>
+Run ```adduser(8)``` command and answer questions
+
+* Packages
+
+Login as user and add to ```~/.profile```:<br>
+```export PKG_PATH=ftp://ftp5.usa.openbsd.org/pub/OpenBSD/`uname -r`/packages/`uname -m'/```
+
+[Mirrors found here.](http://www.openbsd.org/ftp.html)
+
+### Install Patches
+[Official ref.](http://www.openbsd.org/faq/faq10.html#Patches)
+
+###Using M:Tier
+[mtier](https://stable.mtier.org/) offers an easy way to keep OpenBSD up to date.
+
+M:tier's authentication certificate needs to be copied into /etc/signify.  As
+root change to the /etc/signify directory and use wget to download the
+authentication file
+
+```cd /etc/signify```<br>
+```wget https://stable.mtier.org/mtier-57-pkg.pub```<br>
+```cd /usr/local/libexec```<br>
+```wget https://stable.mtier.org/openup```<br>
+```chmod +x openup```
+
+[How to use openup](http://www.mtier.org/index.php/solutions/apps/openup/)
+<br>*hint: ```sudo openup```*
+
+
+visudo<br>```"user"  ALL=(ALL) PASSWD: /usr/local/libexec/openup```
+
+## X11
+
+[See my dotfiles](https://github.com/alexjj/dotfiles/tree/openbsd/X11) for .xsession, .Xresources and so on.
+
+Configure ~/.cwmrc / whatever WM using.
+
+login classes things for firefox etc.
+
+[cwm "guide"](http://undeadly.org/cgi?action=article&sid=20090502141551)
+
+### Software list
+sudo pkg_add rxvt-unicode terminus-font
+
+### XFCE
+
+```$ cat /etc/rc.conf.local```
+```multicast_host=YES```
+```hotplugd_flags=""```    ## needed to start hotplugd for toad
+```apmd_flags="-A"```      ## enables suspend and power mgmt
+# messagebus is the new name for dbus_daemon in 5.8
+```pkg_scripts="${pkg_scripts} messagebus toadd"```
+
+```cat ~/.xsession```<br>
+```exec /usr/local/bin/ck-launch-session /usr/local/bin/startxfce4```
+
+## Misc
+
+User to shutdown/reboot:<br>
+visudo<br>
+```%users  localhost=/sbin/shutdown -h now,/sbin/shutdown -r now```
+
+Convert man page to ps to print:<br>
+```mandoc -Tps /usr/share/man/man8/afterboot.8 > afterboot.ps```
+---
+pub_date: 2015-08-16
+---
+rev_date: 2015-10-24
+---
+author: Alex Johnstone

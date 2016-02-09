@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% block extrahead %}
+<meta property="og:title" content="{{ this.title }}" />
+<meta property="og:url" content="{{ this.url }}" />
+{% endblock %}
+{% block title %}{{ this.title }}{% endblock %}
+{% block body %}
+    <h1>{{ this.title }}</h1>
+    <p><small>
+    written by {{ this.author }} on {{ this.pub_date }}. Updated {{ this.rev_date }}.
+    </small></p>
+    <hr>
+    {{ this.body }}
+    {{ render_disqus_comments() }}
+
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends "layout.html" %}
+{% block title %}{{ this.title }}{% endblock %}
+{% block body %}
+<h2>Guides</h2>
+<p>A list of guides, mostly for installing and administrating operating systems and setting up software</p>
+{% for guide in this.children %}
+    <li><a href="{{ guide|url }}">{{ guide.title }}</a> » <small>last updated: {{ guide.rev_date }}</small></li>
+{% endfor %}
+{% endblock %}
