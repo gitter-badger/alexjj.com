@@ -10,8 +10,9 @@
 <meta property="og:url" content="" />
 
 <link href='https://fonts.googleapis.com/css?family=Roboto:400,400italic,700italic' rel='stylesheet' type='text/css'>
-<link rel="stylesheet" href="../../static/style.css?h=423c1265">
+<link rel="stylesheet" href="../../static/style.css?h=f998cb8e">
 <link rel="shortcut icon" href="../../static/favicon.png">
+<link rel="stylesheet" href="../../static/pygments.css">
 <title>OpenBSD — alexjj.com</title>
 </head>
 <body>
@@ -159,12 +160,13 @@ authentication file</p>
 <h3>Software list</h3>
 <p>sudo pkg_add rxvt-unicode terminus-font</p>
 <h3>XFCE</h3>
-<p><code>$ cat /etc/rc.conf.local</code></p>
-<pre><code class="lang-multicast_host=YES```">```hotplugd_flags=&quot;&quot;```    ## needed to start hotplugd for toad
-```apmd_flags=&quot;-A&quot;```      ## enables suspend and power mgmt
-# messagebus is the new name for dbus_daemon in 5.8
-```pkg_scripts=&quot;${pkg_scripts} messagebus toadd&quot;
-</code></pre>
+<div class="highlight"><pre><span></span><span class="err">$</span> <span class="err">cat</span> <span class="err">/etc/rc.conf.local</span>
+<span class="na">multicast_host</span><span class="o">=</span><span class="s">YES</span>
+<span class="na">hotplugd_flags</span><span class="o">=</span><span class="s">&quot;&quot;    ## needed to start hotplugd for toad</span>
+<span class="na">apmd_flags</span><span class="o">=</span><span class="s">&quot;-A&quot;      ## enables suspend and power mgmt</span>
+<span class="c1"># messagebus is the new name for dbus_daemon in 5.8</span>
+</pre></div>
+<p><code>pkg_scripts="${pkg_scripts} messagebus toadd"</code></p>
 <p><code>cat ~/.xsession</code><br>
 <code>exec /usr/local/bin/ck-launch-session /usr/local/bin/startxfce4</code></p>
 <h2>Misc</h2>

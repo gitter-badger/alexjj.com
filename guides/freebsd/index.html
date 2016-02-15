@@ -10,8 +10,9 @@
 <meta property="og:url" content="" />
 
 <link href='https://fonts.googleapis.com/css?family=Roboto:400,400italic,700italic' rel='stylesheet' type='text/css'>
-<link rel="stylesheet" href="../../static/style.css?h=423c1265">
+<link rel="stylesheet" href="../../static/style.css?h=f998cb8e">
 <link rel="shortcut icon" href="../../static/favicon.png">
+<link rel="stylesheet" href="../../static/pygments.css">
 <title>FreeBSD — alexjj.com</title>
 </head>
 <body>
@@ -48,11 +49,11 @@
 Add user to <code>wheel</code> and <code>operator</code> group</p>
 <h3>First commands</h3>
 <p>Update FreeBSD:</p>
-<pre><code>freebsd-update fetch
-freebsd-update install
-portsnap fetch extract
-/usr/sbin/pkg
-</code></pre>
+<div class="highlight"><pre><span></span><span class="err">freebsd-update</span> <span class="err">fetch</span>
+<span class="err">freebsd-update</span> <span class="err">install</span>
+<span class="err">portsnap</span> <span class="err">fetch</span> <span class="err">extract</span>
+<span class="err">/usr/sbin/pkg</span>
+</pre></div>
 <p>Install portmaster for managing ports:</p>
 <pre><code>cd /usr/ports/ports-mgmt/portmaster
 make install clean
