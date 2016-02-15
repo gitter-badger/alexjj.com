@@ -1,4 +1,6 @@
 # alexjj.com
+
+[![Join the chat at https://gitter.im/alexjj/alexjj.com](https://badges.gitter.im/alexjj/alexjj.com.svg)](https://gitter.im/alexjj/alexjj.com?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://travis-ci.org/alexjj/alexjj.com.svg?branch=master)](https://travis-ci.org/alexjj/alexjj.com)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/alexjj/alexjj.com/blob/master/LICENSE)
 
