@@ -163,11 +163,13 @@ sudo pkg_add rxvt-unicode terminus-font
 
 ### XFCE
 
-```$ cat /etc/rc.conf.local```
-```multicast_host=YES```
-```hotplugd_flags=""```    ## needed to start hotplugd for toad
-```apmd_flags="-A"```      ## enables suspend and power mgmt
+```ini
+$ cat /etc/rc.conf.local
+multicast_host=YES
+hotplugd_flags=""    ## needed to start hotplugd for toad
+apmd_flags="-A"      ## enables suspend and power mgmt
 # messagebus is the new name for dbus_daemon in 5.8
+```
 ```pkg_scripts="${pkg_scripts} messagebus toadd"```
 
 ```cat ~/.xsession```<br>

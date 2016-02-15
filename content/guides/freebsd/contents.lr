@@ -13,7 +13,7 @@ Add user to ```wheel``` and ```operator``` group
 
 Update FreeBSD:
 
-```
+```ini
 freebsd-update fetch
 freebsd-update install
 portsnap fetch extract
